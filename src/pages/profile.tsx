@@ -8,8 +8,8 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
+    const [name, setName] = useState(() => localStorage.getItem('userName') || '');
+    const [email, setEmail] = useState(() => localStorage.getItem('userEmail') || '');
     const [skills, setSkills] = useState('');
     const [description, setDescription] = useState('');
 
@@ -38,10 +38,15 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
             })
                 .then(res => res.json())
                 .then(data => {
-                    setName(data.name || '');
-                    setEmail(data.email || '');
+                    const fetchedName = data.name || '';
+                    const fetchedEmail = data.email || '';
+                    setName(fetchedName);
+                    setEmail(fetchedEmail);
                     setSkills(data.skills || '');
                     setDescription(data.description || '');
+                    // Сохраняем в localStorage чтобы не пропадало
+                    localStorage.setItem('userName', fetchedName);
+                    localStorage.setItem('userEmail', fetchedEmail);
                 })
                 .catch(() => console.log("Бэкенд недоступен"));
         }
@@ -62,7 +67,9 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
 
     const handleSave = () => {
         setIsEditing(false);
-        console.log('Данные сохранены в БД:', { name, email, skills, description });
+        localStorage.setItem('userName', name);
+        localStorage.setItem('userEmail', email);
+        console.log('Данные сохранены:', { name, email, skills, description });
     };
 
     const openPasswordModal = () => {
@@ -159,7 +166,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                     {isEditing ? (
                         <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
                     ) : (
-                        <p className="profile-value">{name || ''}</p>
+                        <p className="profile-value">{name || 'Not specified'}</p>
                     )}
                 </div>
 
@@ -168,7 +175,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                     {isEditing ? (
                         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                     ) : (
-                        <p className="profile-value">{email || ''}</p>
+                        <p className="profile-value">{email || 'Not specified'}</p>
                     )}
                 </div>
 
@@ -177,7 +184,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                     {isEditing ? (
                         <textarea value={skills} onChange={(e) => setSkills(e.target.value)} rows={3} />
                     ) : (
-                        <p className="profile-value">{skills || ''}</p>
+                        <p className="profile-value">{skills || 'Not specified'}</p>
                     )}
                 </div>
 
@@ -186,7 +193,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                     {isEditing ? (
                         <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} />
                     ) : (
-                        <p className="profile-value">{description || ''}</p>
+                        <p className="profile-value">{description || 'Not specified'}</p>
                     )}
                 </div>
 
@@ -200,6 +207,12 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                         <>
                             <button className="change-pass-btn" onClick={openPasswordModal}>Change Password</button>
                             <button className="edit-btn" onClick={startEditing}>Edit Profile</button>
+                            <button className="logout-btn" onClick={() => {
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('userName');
+                                localStorage.removeItem('userEmail');
+                                window.location.href = '/';
+                            }}>Log Out</button>
                         </>
                     )}
                 </div>
@@ -251,6 +264,10 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                         </div>
                         <div className="modal-body">
                             <div className="form-group-combined">
+                                <label>Team Name</label>
+                                <p className="profile-value">{viewingTeam.name}</p>
+                            </div>
+                            <div className="form-group-combined">
                                 <label>Project Goals</label>
                                 <p className="profile-value">{viewingTeam.goals || 'Not specified'}</p>
                             </div>
@@ -266,7 +283,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                                 <button className="cancel-btn" style={{ flex: 1 }} onClick={() => setViewingTeam(null)}>
                                     Close
                                 </button>
-                                <button className="save-btn" style={{ flex: 1 }} onClick={() => { }}>
+                                <button className="save-btn" style={{ flex: 1 }} onClick={() => {}}>
                                     Apply
                                 </button>
                             </div>
@@ -336,7 +353,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                                     type="text"
                                     value={editTeamData.name}
                                     onChange={(e) => setEditTeamData({ ...editTeamData, name: e.target.value })}
-                                    placeholder=""
+                                    placeholder="enter team name"
                                 />
                             </div>
                             <div className="form-group-combined">
@@ -344,7 +361,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                                 <textarea
                                     value={editTeamData.goals}
                                     onChange={(e) => setEditTeamData({ ...editTeamData, goals: e.target.value })}
-                                    placeholder=""
+                                    placeholder="what do you want to achieve?"
                                     rows={3}
                                     style={{ background: '#EDF0E8', border: 'none', borderRadius: '0 0 12px 12px', padding: '12px 20px', fontSize: '1rem', color: '#333', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
                                 />
@@ -355,7 +372,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                                     type="text"
                                     value={editTeamData.roles}
                                     onChange={(e) => setEditTeamData({ ...editTeamData, roles: e.target.value })}
-                                    placeholder=""
+                                    placeholder="e.g. designer, backend dev..."
                                 />
                             </div>
                             <div className="form-group-combined">
@@ -363,7 +380,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                                 <textarea
                                     value={editTeamData.description}
                                     onChange={(e) => setEditTeamData({ ...editTeamData, description: e.target.value })}
-                                    placeholder=""
+                                    placeholder="describe your project..."
                                     rows={4}
                                     style={{ background: '#EDF0E8', border: 'none', borderRadius: '0 0 12px 12px', padding: '12px 20px', fontSize: '1rem', color: '#333', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
                                 />

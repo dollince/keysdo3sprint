@@ -1,10 +1,36 @@
 import { useState } from 'react';
 import type { Team } from '../App';
 
-function ViewTeamModal({ team, onClose }: {
-    team: Team;
-    onClose: () => void;
-}) {
+// ─── Типы ───────────────────────────────────────────────────────
+interface Application {
+    id: number;
+    teamId: number;
+    applicantName: string;
+    applicantEmail: string;
+    message: string;
+    status: 'pending' | 'accepted' | 'rejected';
+}
+
+// ─── Модалка просмотра проекта + подача заявки ──────────────────
+function ViewTeamModal({ team, onClose }: { team: Team; onClose: () => void }) {
+    const [applying, setApplying] = useState(false);
+    const [message, setMessage] = useState('');
+    const [sent, setSent] = useState(false);
+
+    const handleApply = () => {
+        const existing: Application[] = JSON.parse(localStorage.getItem('applications') || '[]');
+        const newApp: Application = {
+            id: Date.now(),
+            teamId: team.id,
+            applicantName: localStorage.getItem('userName') || '',
+            applicantEmail: localStorage.getItem('userEmail') || '',
+            message,
+            status: 'pending',
+        };
+        localStorage.setItem('applications', JSON.stringify([...existing, newApp]));
+        setSent(true);
+    };
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-card" onClick={(e) => e.stopPropagation()}>
@@ -13,71 +39,161 @@ function ViewTeamModal({ team, onClose }: {
                     <span className="modal-close" onClick={onClose}>X</span>
                 </div>
                 <div className="modal-body">
-                    <div className="form-group-combined">
-                        <label>Team Name</label>
-                        <p className="profile-value">{team.name}</p>
-                    </div>
-                    <div className="form-group-combined">
-                        <label>Project Goals</label>
-                        <p className="profile-value">{team.goals || 'Not specified'}</p>
-                    </div>
-                    <div className="form-group-combined">
-                        <label>Roles Needed</label>
-                        <p className="profile-value">{team.roles || 'Not specified'}</p>
-                    </div>
-                    <div className="form-group-combined">
-                        <label>Project Description</label>
-                        <p className="profile-value">{team.description || 'Not specified'}</p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-                        <button className="cancel-btn" style={{ flex: 1 }} onClick={onClose}>
-                            Close
-                        </button>
-                        <button className="save-btn" style={{ flex: 1 }} onClick={() => {}}>
-                            Apply
-                        </button>
-                    </div>
+                    <div className="form-group-combined"><label>Team Name</label><p className="profile-value">{team.name}</p></div>
+                    <div className="form-group-combined"><label>Project Goals</label><p className="profile-value">{team.goals || 'Not specified'}</p></div>
+                    <div className="form-group-combined"><label>Roles Needed</label><p className="profile-value">{team.roles || 'Not specified'}</p></div>
+                    <div className="form-group-combined"><label>Project Description</label><p className="profile-value">{team.description || 'Not specified'}</p></div>
+
+                    {sent ? (
+                        <p className="password-success">✓ Application sent successfully!</p>
+                    ) : applying ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div className="form-group-combined">
+                                <label>Message to team (optional)</label>
+                                <textarea value={message} onChange={(e) => setMessage(e.target.value)}
+                                    placeholder="Tell why you want to join..." rows={3}
+                                    style={{ background: '#EDF0E8', border: 'none', borderRadius: '0 0 12px 12px', padding: '12px 20px', color: '#333', outline: 'none', resize: 'vertical', fontFamily: 'inherit', fontSize: '1rem' }} />
+                            </div>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button className="cancel-btn" style={{ flex: 1 }} onClick={() => setApplying(false)}>Back</button>
+                                <button className="save-btn" style={{ flex: 1 }} onClick={handleApply}>Send Application</button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                            <button className="cancel-btn" style={{ flex: 1 }} onClick={onClose}>Close</button>
+                            <button className="save-btn" style={{ flex: 1 }} onClick={() => setApplying(true)}>Apply</button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
 
-function HomePage({ teams }: { teams: Team[] }) {
-    const [viewingTeam, setViewingTeam] = useState<Team | null>(null);
+// ─── Модалка заявок для владельца ──────────────────────────────
+function ApplicationsModal({ team, onClose }: { team: Team; onClose: () => void }) {
+    const [applications, setApplications] = useState<Application[]>(() => {
+        const all: Application[] = JSON.parse(localStorage.getItem('applications') || '[]');
+        return all.filter(a => a.teamId === team.id);
+    });
+
+    const updateStatus = (appId: number, status: 'accepted' | 'rejected') => {
+        const all: Application[] = JSON.parse(localStorage.getItem('applications') || '[]');
+        const updated = all.map(a => a.id === appId ? { ...a, status } : a);
+        localStorage.setItem('applications', JSON.stringify(updated));
+        setApplications(updated.filter(a => a.teamId === team.id));
+    };
 
     return (
-        <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
-            <h2 style={{ color: '#5B8064', fontWeight: 600, marginBottom: '20px' }}>All Teams</h2>
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-card" style={{ maxWidth: '560px' }} onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                    <h2 className="modal-title">Applications — {team.name}</h2>
+                    <span className="modal-close" onClick={onClose}>X</span>
+                </div>
+                <div className="modal-body">
+                    {applications.length === 0 ? (
+                        <p style={{ color: '#999', fontStyle: 'italic' }}>No applications yet.</p>
+                    ) : (
+                        applications.map(app => (
+                            <div key={app.id} className="application-card">
+                                <div className="application-info">
+                                    <strong>{app.applicantName || 'Unknown'}</strong>
+                                    <span style={{ color: '#777', fontSize: '0.9rem', marginLeft: '8px' }}>{app.applicantEmail}</span>
+                                    {app.message && <p style={{ margin: '6px 0 0', color: '#444', fontSize: '0.95rem' }}>{app.message}</p>}
+                                </div>
+                                <div className="application-status-row">
+                                    {app.status === 'pending' ? (
+                                        <>
+                                            <button className="accept-btn" onClick={() => updateStatus(app.id, 'accepted')}>Accept</button>
+                                            <button className="reject-btn" onClick={() => updateStatus(app.id, 'rejected')}>Reject</button>
+                                        </>
+                                    ) : (
+                                        <span className={`status-badge status-${app.status}`}>
+                                            {app.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                    <button className="cancel-btn" style={{ width: '100%', marginTop: '8px' }} onClick={onClose}>Close</button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
-            {teams.length === 0 ? (
+// ─── Главная страница ───────────────────────────────────────────
+function HomePage({ teams }: { teams: Team[] }) {
+    const [viewingTeam, setViewingTeam] = useState<Team | null>(null);
+    const [applicationsTeam, setApplicationsTeam] = useState<Team | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchType, setSearchType] = useState<'projects' | 'users'>('projects');
+
+    // ID команд которые создал текущий пользователь (хранится локально после создания)
+    const ownerTeamIds: number[] = JSON.parse(localStorage.getItem('ownerTeamIds') || '[]');
+
+    const filteredTeams = teams.filter(team => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase();
+        if (searchType === 'projects') {
+            return team.name.toLowerCase().includes(q) ||
+                (team.description || '').toLowerCase().includes(q) ||
+                (team.roles || '').toLowerCase().includes(q) ||
+                (team.goals || '').toLowerCase().includes(q);
+        }
+        return (team.roles || '').toLowerCase().includes(q);
+    });
+
+    return (
+        <div style={{ maxWidth: '800px', margin: '0 auto', padding: '24px 20px' }}>
+
+            {/* ── Поиск ── */}
+            <div className="search-bar-wrapper">
+                <div className="search-type-toggle">
+                    <button className={`search-type-btn ${searchType === 'projects' ? 'active' : ''}`} onClick={() => setSearchType('projects')}>Projects</button>
+                    <button className={`search-type-btn ${searchType === 'users' ? 'active' : ''}`} onClick={() => setSearchType('users')}>By Skills</button>
+                </div>
+                <input className="search-input" type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={searchType === 'projects' ? 'Search by name, tag, description...' : 'Search by required skills...'} />
+            </div>
+
+            <h2 style={{ color: '#5B8064', fontWeight: 600, marginBottom: '20px' }}>
+                {searchQuery ? `Results: ${filteredTeams.length}` : 'All Teams'}
+            </h2>
+
+            {filteredTeams.length === 0 ? (
                 <div className="team-item empty">
-                    <p className="empty-text">No teams yet. Be the first — create one with the + button!</p>
+                    <p className="empty-text">{searchQuery ? 'Nothing found. Try a different query.' : 'No teams yet. Be the first — create one with the + button!'}</p>
                 </div>
             ) : (
                 <div className="teams-list">
-                    {teams.map(team => (
-                        <div
-                            className="team-card"
-                            key={team.id}
-                            onClick={() => setViewingTeam(team)}
-                            style={{ cursor: 'pointer' }}
-                        >
+                    {filteredTeams.map(team => (
+                        <div className="team-card" key={team.id} onClick={() => setViewingTeam(team)} style={{ cursor: 'pointer' }}>
                             <div className="team-card-content">
                                 <h4 className="team-card-name">{team.name}</h4>
                                 <p className="team-card-description">{team.description || 'No description'}</p>
+                                {team.roles && (
+                                    <div className="team-tags">
+                                        {team.roles.split(',').map((r, i) => <span key={i} className="team-tag">{r.trim()}</span>)}
+                                    </div>
+                                )}
                             </div>
+                            {ownerTeamIds.includes(team.id) && (
+                                <button className="applications-btn" title="View applications"
+                                    onClick={(e) => { e.stopPropagation(); setApplicationsTeam(team); }}>
+                                    Applications
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
             )}
 
-            {viewingTeam && (
-                <ViewTeamModal
-                    team={viewingTeam}
-                    onClose={() => setViewingTeam(null)}
-                />
-            )}
+            {viewingTeam && <ViewTeamModal team={viewingTeam} onClose={() => setViewingTeam(null)} />}
+            {applicationsTeam && <ApplicationsModal team={applicationsTeam} onClose={() => setApplicationsTeam(null)} />}
         </div>
     );
 }
