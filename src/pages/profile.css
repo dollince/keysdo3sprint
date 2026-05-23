@@ -470,3 +470,10 @@
 }
 .status-accepted { color: #27ae60; }
 .status-rejected { color: #c0392b; }
+
+/* Делаем цвет плейсхолдеров одинаковым для всех input и textarea */
+.form-group-combined input::placeholder,
+.form-group-combined textarea::placeholder {
+    color: #9dae9f !important; /* Тот самый цвет серо-зеленого оттенка */
+    opacity: 1;                /* Убирает дефолтную прозрачность в Firefox */
+}

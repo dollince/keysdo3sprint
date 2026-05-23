@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import './profile.css';
 import type { Team } from '../App';
 
+interface Application {
+    id: number;
+    teamId: number;
+    applicantName: string;
+    applicantEmail: string;
+    message: string;
+    status: 'pending' | 'accepted' | 'rejected';
+}
+
 interface ProfileProps {
     teams: Team[];
     onTeamsChange: (teams: Team[]) => void;
@@ -29,6 +38,8 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
     });
 
     const [viewingTeam, setViewingTeam] = useState<Team | null>(null);
+    const [applicationsTeam, setApplicationsTeam] = useState<Team | null>(null);
+    const [applications, setApplications] = useState<Application[]>([]);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -40,11 +51,11 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                 .then(data => {
                     const fetchedName = data.name || '';
                     const fetchedEmail = data.email || '';
+                    const setNameState = fetchedName;
                     setName(fetchedName);
                     setEmail(fetchedEmail);
                     setSkills(data.skills || '');
                     setDescription(data.description || '');
-                    // Сохраняем в localStorage чтобы не пропадало
                     localStorage.setItem('userName', fetchedName);
                     localStorage.setItem('userEmail', fetchedEmail);
                 })
@@ -157,6 +168,23 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
         closeEditTeam();
     };
 
+    const openApplications = (team: Team) => {
+        const all: Application[] = JSON.parse(localStorage.getItem('applications') || '[]');
+        setApplications(all.filter(a => a.teamId === team.id));
+        setApplicationsTeam(team);
+    };
+
+    const updateApplicationStatus = (appId: number, status: 'accepted' | 'rejected') => {
+        const all: Application[] = JSON.parse(localStorage.getItem('applications') || '[]');
+        const updated = all.map(a => a.id === appId ? { ...a, status } : a);
+        localStorage.setItem('applications', JSON.stringify(updated));
+        
+        // Безопасная проверка: если applicationsTeam задан, фильтруем по его id
+        if (applicationsTeam) {
+            setApplications(updated.filter(a => a.teamId === applicationsTeam.id));
+        }
+    };
+
     return (
         <div className="profile-container">
             <div className="profile-card">
@@ -245,6 +273,16 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                                         title="Edit team"
                                     >
                                         ✎
+                                    </button>
+                                    <button
+                                        className="applications-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            openApplications(team);
+                                        }}
+                                        title="View applications"
+                                    >
+                                        Applications
                                     </button>
                                 </div>
                             ))
@@ -395,6 +433,45 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                 </div>
             )}
 
+            {/* Модалка заявок на команду */}
+            {applicationsTeam && (
+                <div className="modal-overlay" onClick={() => setApplicationsTeam(null)}>
+                    <div className="modal-card" style={{ maxWidth: '560px' }} onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Applications — {applicationsTeam.name}</h2>
+                            <span className="modal-close" onClick={() => setApplicationsTeam(null)}>X</span>
+                        </div>
+                        <div className="modal-body">
+                            {applications.length === 0 ? (
+                                <p style={{ color: '#999', fontStyle: 'italic' }}>No applications yet.</p>
+                            ) : (
+                                applications.map(app => (
+                                    <div key={app.id} className="application-card">
+                                        <div className="application-info">
+                                            <strong>{app.applicantName || 'Unknown'}</strong>
+                                            <span style={{ color: '#777', fontSize: '0.9rem', marginLeft: '8px' }}>{app.applicantEmail}</span>
+                                            {app.message && <p style={{ margin: '6px 0 0', color: '#444', fontSize: '0.95rem' }}>{app.message}</p>}
+                                        </div>
+                                        <div className="application-status-row">
+                                            {app.status === 'pending' ? (
+                                                <>
+                                                    <button className="accept-btn" onClick={() => updateApplicationStatus(app.id, 'accepted')}>Accept</button>
+                                                    <button className="reject-btn" onClick={() => updateApplicationStatus(app.id, 'rejected')}>Reject</button>
+                                                </>
+                                            ) : (
+                                                <span className={`status-badge status-${app.status}`}>
+                                                    {app.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                            <button className="cancel-btn" style={{ width: '100%', marginTop: '8px' }} onClick={() => setApplicationsTeam(null)}>Close</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
