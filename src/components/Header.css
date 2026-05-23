@@ -71,3 +71,41 @@
 .header-profile-link:active {
     transform: scale(0.95); /* Немного уменьшается при самом клике */
 }
+/* ── Правая часть шапки ── */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ── Иконка сообщений ── */
+.header-messages-btn {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    transition: background-color 0.2s, transform 0.2s;
+}
+.header-messages-btn:hover {
+    background-color: rgba(91, 128, 100, 0.1);
+    transform: scale(1.1);
+}
+.messages-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: #c0392b;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

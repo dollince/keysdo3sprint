@@ -14,6 +14,7 @@ import Profile from './pages/profile';
 import HomePage from './pages/home';
 
 import './pages/profile.css';
+import { MessagesModal, getMessages } from './pages/home';
 
 export interface Team {
     id: number;
@@ -91,7 +92,9 @@ function CreateTeamModal({
                                 padding: '12px 20px',
                                 color: '#333',
                                 outline: 'none',
-                                resize: 'vertical'
+                                resize: 'vertical',
+                                fontFamily: 'inherit',
+                                fontSize: '1rem'
                             }}
                         />
                     </div>
@@ -122,7 +125,9 @@ function CreateTeamModal({
                                 padding: '12px 20px',
                                 color: '#333',
                                 outline: 'none',
-                                resize: 'vertical'
+                                resize: 'vertical',
+                                fontFamily: 'inherit',
+                                fontSize: '1rem'
                             }}
                         />
                     </div>
@@ -229,6 +234,14 @@ function AppContent() {
     );
 
     const [teams, setTeams] = useState<Team[]>([]);
+    const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+
+    const getUnreadCount = () => {
+        const myEmail = localStorage.getItem('userEmail') || '';
+        return getMessages().filter(m => m.toEmail === myEmail && !m.read).length;
+    };
+    const [unreadCount, setUnreadCount] = useState(getUnreadCount);
+
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -389,6 +402,8 @@ function AppContent() {
         <>
             <Header
                 isLoggedIn={isLoggedIn}
+                onMessages={() => { setIsMessagesOpen(true); setUnreadCount(0); }}
+                unreadCount={unreadCount}
                 onProfile={() =>
                     isLoggedIn
                         ? navigate('/profile')
@@ -413,7 +428,7 @@ function AppContent() {
                     <Route
                         path="/"
                         element={
-                            <HomePage teams={teams} />
+                            <HomePage teams={teams} onOpenMessages={() => { setIsMessagesOpen(true); setUnreadCount(0); }} />
                         }
                     />
 
@@ -438,7 +453,7 @@ function AppContent() {
                                     }
                                 />
                             ) : (
-                                <HomePage teams={teams} />
+                                <HomePage teams={teams} onOpenMessages={() => { setIsMessagesOpen(true); setUnreadCount(0); }} />
                             )
                         }
                     />
@@ -460,6 +475,10 @@ function AppContent() {
                         setIsAuthModalOpen(false)
                     }
                 />
+            )}
+
+            {isMessagesOpen && (
+                <MessagesModal onClose={() => setIsMessagesOpen(false)} />
             )}
         </>
     );

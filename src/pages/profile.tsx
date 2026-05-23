@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './profile.css';
 import type { Team } from '../App';
+import { registerUserProfile } from './home';
 
 interface Application {
     id: number;
@@ -19,8 +20,8 @@ interface ProfileProps {
 const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
     const [name, setName] = useState(() => localStorage.getItem('userName') || '');
     const [email, setEmail] = useState(() => localStorage.getItem('userEmail') || '');
-    const [skills, setSkills] = useState('');
-    const [description, setDescription] = useState('');
+    const [skills, setSkills] = useState(() => localStorage.getItem('userSkills') || '');
+    const [description, setDescription] = useState(() => localStorage.getItem('userDescription') || '');
 
     const [tempData, setTempData] = useState({ name: '', email: '', skills: '', description: '' });
     const [isEditing, setIsEditing] = useState(false);
@@ -58,6 +59,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                     setDescription(data.description || '');
                     localStorage.setItem('userName', fetchedName);
                     localStorage.setItem('userEmail', fetchedEmail);
+                    registerUserProfile({ name: fetchedName, email: fetchedEmail, skills: data.skills || '', description: data.description || '' });
                 })
                 .catch(() => console.log("Бэкенд недоступен"));
         }
@@ -80,6 +82,9 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
         setIsEditing(false);
         localStorage.setItem('userName', name);
         localStorage.setItem('userEmail', email);
+        localStorage.setItem('userSkills', skills);
+        localStorage.setItem('userDescription', description);
+        registerUserProfile({ name, email, skills, description });
         console.log('Данные сохранены:', { name, email, skills, description });
     };
 
