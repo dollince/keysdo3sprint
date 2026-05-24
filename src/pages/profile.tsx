@@ -357,7 +357,6 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
               <div className="form-group-combined"><label>Roles Needed</label><input type="text" value={editTeamData.roles} onChange={(e) => setEditTeamData({ ...editTeamData, roles: e.target.value })} placeholder="e.g. designer, backend dev..." /></div>
               <div className="form-group-combined"><label>Project Description</label><textarea value={editTeamData.description} onChange={(e) => setEditTeamData({ ...editTeamData, description: e.target.value })} placeholder="describe your project..." rows={4} style={{ background: '#EDF0E8', border: 'none', borderRadius: '0 0 12px 12px', padding: '12px 20px', fontSize: '1rem', color: '#333', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }} /></div>
               <div className="team-modal-actions">
-                <button className="cancel-btn" onClick={closeEditTeam}>Cancel</button>
                 <button className="delete-team-btn" onClick={handleDeleteTeam}>Delete</button>
                 <button className="save-btn" onClick={handleSaveTeam}>Save</button>
               </div>
@@ -423,7 +422,7 @@ const Profile: React.FC<ProfileProps> = ({ teams, onTeamsChange }) => {
                   </div>
                 ))
               )}
-              <button className="cancel-btn" style={{ width: '100%', marginTop: '8px' }} onClick={() => { setApplicationsTeam(null); setAcceptingApp(null); }}>Close</button>
+
             </div>
           </div>
         </div>

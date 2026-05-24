@@ -97,9 +97,8 @@ function ViewTeamModal({ team, onClose }: { team: Team; onClose: () => void }) {
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-              <button className="cancel-btn" style={{ flex: 1 }} onClick={onClose}>Close</button>
-              <button className="save-btn" style={{ flex: 1 }} onClick={() => setApplying(true)}>Apply</button>
+            <div style={{ marginTop: '8px' }}>
+              <button className="save-btn" style={{ width: '100%' }} onClick={() => setApplying(true)}>Apply</button>
             </div>
           )}
         </div>
@@ -149,9 +148,8 @@ function AcceptMessageModal({ app, team, onClose, onDone }: {
               placeholder="Например: Напиши мне в ТГ @username или на почту..."
               rows={3} style={{ background: '#EDF0E8', border: 'none', borderRadius: '0 0 12px 12px', padding: '12px 20px', color: '#333', outline: 'none', resize: 'vertical', fontFamily: 'inherit', fontSize: '1rem' }} />
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button className="cancel-btn" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
-            <button className="save-btn" style={{ flex: 1 }} onClick={handleSend}>Accept & Send</button>
+          <div style={{ marginTop: '8px' }}>
+            <button className="save-btn" style={{ width: '100%' }} onClick={handleSend}>Accept & Send</button>
           </div>
         </div>
       </div>
@@ -239,7 +237,7 @@ function ApplicationsModal({ team, onClose }: { team: Team; onClose: () => void 
               </div>
             ))
           )}
-          <button className="cancel-btn" style={{ width: '100%', marginTop: '8px' }} onClick={onClose}>Close</button>
+
         </div>
       </div>
     </div>
@@ -271,6 +269,7 @@ export function MessagesModal({ onClose }: { onClose: () => void }) {
           <span className="modal-close" onClick={onClose}>X</span>
         </div>
         <div className="modal-body">
+          <div className="messages-scroll" style={{ maxHeight: '60vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
           {messages.length === 0 ? (
             <p style={{ color: '#999', fontStyle: 'italic' }}>No messages yet.</p>
           ) : (
@@ -290,7 +289,7 @@ export function MessagesModal({ onClose }: { onClose: () => void }) {
               </div>
             ))
           )}
-          <button className="cancel-btn" style={{ width: '100%', marginTop: '8px' }} onClick={onClose}>Close</button>
+          </div>
         </div>
       </div>
     </div>
